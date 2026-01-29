@@ -1,6 +1,5 @@
 import { test, expect } from "playwright-test-coverage";
-import { basicInit, loginSteps } from "./test-helper-methods";
-
+import { basicInit, fillUserFields, loginSteps } from "./test-helper-methods";
 
 test("login", async ({ page }) => {
   await basicInit(page);
@@ -66,11 +65,12 @@ test("view franchisee dashboard", async ({ page }) => {
   await basicInit(page);
   await page.getByRole("link", { name: "Login" }).click();
   await loginSteps(page, "f@jwt.com", "c");
-  //
   await page
     .getByLabel("Global")
     .getByRole("link", { name: "Franchise" })
     .click();
+  await expect(page.getByText("pizzaPocket")).toBeVisible();
+  await expect(page.locator("tbody")).toContainText("SLC");
 });
 
 test("logout", async ({ page }) => {
@@ -79,6 +79,16 @@ test("logout", async ({ page }) => {
   await loginSteps(page, "d@jwt.com", "a");
   await page.getByRole("link", { name: "Logout" }).click();
   await expect(page.getByRole("link", { name: "Login" })).toBeVisible();
+});
+
+test("register", async ({ page }) => {
+  await basicInit(page);
+  await page.getByRole("link", { name: "Register" }).click();
+  await expect(page.getByRole('heading')).toContainText('Welcome to the party');
+  await page.getByRole('textbox', { name: 'Full name' }).click();
+  await page.getByRole('textbox', { name: 'Full name' }).fill('Fake Guy');
+  await fillUserFields(page, "z@jwt.com", "z");
+  await page.getByRole('button', { name: 'Register' }).click();
 });
 
 test("view docs page", async ({ page }) => {
@@ -91,16 +101,47 @@ test("view docs page", async ({ page }) => {
 
 test("visit 'About' page", async ({ page }) => {
   await page.goto("/");
-
-  // Go to order page
   await page.getByRole("link", { name: "About" }).click();
   await expect(page.getByRole("main")).toContainText("The secret sauce");
 });
 
 test("visit 'History' page", async ({ page }) => {
   await page.goto("/");
-
-  // Go to order page
   await page.getByRole("link", { name: "History" }).click();
   await expect(page.getByRole("main")).toContainText("Mama Rucci, my my");
+});
+
+test("visit 'Not Found' custom page", async ({ page }) => {
+  await page.goto("/fake-page");
+  await expect(page.getByText('Oops')).toBeVisible();
+  await expect(page.getByRole('main')).toContainText('It looks like we have dropped a pizza on the floor. Please try another page.');
+  await expect(page.getByRole('list')).toContainText('fake-page');
+});
+
+test("close store of franchise", async ({ page }) => {
+  await basicInit(page);
+  await page.getByRole("link", { name: "Login" }).click();
+  await loginSteps(page, "f@jwt.com", "c");
+  await page
+    .getByLabel("Global")
+    .getByRole("link", { name: "Franchise" })
+    .click();
+  await page.getByRole("button", { name: "Close" }).click();
+  await expect(page.getByRole("heading")).toContainText("Sorry to see you go");
+});
+
+test("create store of franchise", async ({ page }) => {
+  await basicInit(page);
+  await page.getByRole("link", { name: "Login" }).click();
+  await loginSteps(page, "f@jwt.com", "c");
+  await page
+    .getByLabel("Global")
+    .getByRole("link", { name: "Franchise" })
+    .click();
+  await page.getByRole("button", { name: "Create store" }).click();
+  await expect(page.getByRole("heading")).toContainText("Create store");
+  await expect(page.getByRole('textbox', { name: 'store name' })).toBeVisible();
+  await page.getByRole("textbox", { name: "store name" }).click();
+  await page.getByRole("textbox", { name: "store name" }).fill("TempStore");
+  await page.getByRole("button", { name: "Create" }).click();
 });

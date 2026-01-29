@@ -2,8 +2,6 @@ import { Page } from "@playwright/test";
 import { Role, User } from "../src/service/pizzaService";
 import { expect } from "playwright-test-coverage";
 
-
-
 export async function basicInit(page: Page, initRoute: string = "/") {
   let loggedInUser: User | undefined;
   const validUsers: Record<string, User> = {
@@ -55,6 +53,20 @@ export async function basicInit(page: Page, initRoute: string = "/") {
       };
       expect(method).toBe("DELETE");
       await route.fulfill({ json: logoutRes });
+    } else if (method === "POST") {
+      const postReq = req.postDataJSON();
+      loggedInUser = {
+        id: "6",
+        name: postReq.name,
+        email: postReq.email,
+        password: postReq.password,
+        roles: [{ role: Role.Diner }]
+      };
+      const registerRes = {
+        user: loggedInUser,
+        token: "def456"
+      };
+      await route.fulfill({ json: registerRes });
     }
   });
 
@@ -95,17 +107,32 @@ export async function basicInit(page: Page, initRoute: string = "/") {
         {
           id: 1,
           name: "pizzaPocket",
-          admins: [{ id: 4, name: "pizza franchisee", email: "f@jwt.com" }],
+          admins: [{ id: 5, name: "Franchisee User", email: "f@jwt.com" }],
           stores: [{ id: 1, name: "SLC", totalRevenue: 0 }],
         },
       ];
 
       await route.fulfill({
         status: 200,
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-        },
         json: franchiseResponse,
+      });
+    }
+  });
+
+  await page.route(/\/api\/franchise\/\d+\/store$/, async (route) => {
+    const method = route.request().method();
+
+    // Actual GET
+    if (method === "POST") {
+      const createStoreRes = {
+        id: 2,
+        franchiseId: 1,
+        name: "TempBro",
+      };
+
+      await route.fulfill({
+        status: 200,
+        json: createStoreRes,
       });
     }
   });
@@ -173,10 +200,14 @@ export async function basicInit(page: Page, initRoute: string = "/") {
   await page.goto(initRoute);
 }
 
-export async function loginSteps(page: Page, email: string, password: string) {
+export async function fillUserFields(page: Page, email: string, password: string){
   await page.getByPlaceholder("Email address").click();
   await page.getByPlaceholder("Email address").fill(email);
   await page.getByPlaceholder("Email address").press("Tab");
   await page.getByPlaceholder("Password").fill(password);
+}
+
+export async function loginSteps(page: Page, email: string, password: string) {
+  await fillUserFields(page, email, password);
   await page.getByRole("button", { name: "Login" }).click();
 }
