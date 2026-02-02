@@ -8,7 +8,7 @@ test("login", async ({ page }) => {
   await page.getByRole("textbox", { name: "Password" }).fill("a");
   await page.getByRole("button", { name: "Login" }).click();
 
-  await expect(page.getByRole("link", { name: "KC" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "pd" })).toBeVisible();
 });
 
 test("purchase with login", async ({ page }) => {

@@ -4,10 +4,10 @@ import { expect } from "playwright-test-coverage";
 
 export async function basicInit(page: Page, initRoute: string = "/") {
   let loggedInUser: User | undefined;
-  const validUsers: Record<string, User> = {
+  const userDatabase: Record<string, User> = {
     "d@jwt.com": {
       id: "3",
-      name: "Kai Chen",
+      name: "pizza diner",
       email: "d@jwt.com",
       password: "a",
       roles: [{ role: Role.Diner }],
@@ -35,12 +35,12 @@ export async function basicInit(page: Page, initRoute: string = "/") {
 
     if (method === "PUT") {
       const loginReq = req.postDataJSON();
-      const user = validUsers[loginReq.email];
+      const user = userDatabase[loginReq.email];
       if (!user || user.password !== loginReq.password) {
         await route.fulfill({ status: 401, json: { error: "Unauthorized" } });
         return;
       }
-      loggedInUser = validUsers[loginReq.email];
+      loggedInUser = userDatabase[loginReq.email];
       const loginRes = {
         user: loggedInUser,
         token: "abcdef",
@@ -62,6 +62,9 @@ export async function basicInit(page: Page, initRoute: string = "/") {
         password: postReq.password,
         roles: [{ role: Role.Diner }]
       };
+
+      userDatabase[loggedInUser.email!] = loggedInUser;
+
       const registerRes = {
         user: loggedInUser,
         token: "def456"
@@ -74,6 +77,32 @@ export async function basicInit(page: Page, initRoute: string = "/") {
   await page.route("*/**/api/user/me", async (route) => {
     expect(route.request().method()).toBe("GET");
     await route.fulfill({ json: loggedInUser });
+  });
+
+  await page.route("*/**/api/user/*", async (route) => {
+    const req = route.request();
+    const method = req.method();
+
+    if (method === "PUT"){
+      const updateUserReq = req.postDataJSON();
+      const oldEmail = loggedInUser!.email!;
+
+      // Update the user object
+      const updatedUser = { ...loggedInUser, ...updateUserReq };
+
+      // If the request didn't include a password (undefined) 
+      if (!updateUserReq.password) {
+        updatedUser.password = loggedInUser!.password;
+      }
+
+      loggedInUser = updatedUser;
+
+      if (oldEmail !== updatedUser.email) {
+        delete userDatabase[oldEmail];
+      }
+      userDatabase[updatedUser.email] = updatedUser;
+      await route.fulfill({ json: { user: loggedInUser, token: "def456" } });
+    }
   });
 
   // A standard menu
