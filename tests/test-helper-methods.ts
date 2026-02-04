@@ -252,3 +252,27 @@ export async function registerRandomUser(page: Page, email: string){
   await page.getByRole("button", { name: "Register" }).click();
   await page.getByRole("link", { name: "pd" }).click();
 }
+
+
+export async function editProfileField(page: Page, email: string, fieldUpdateFunction: () => Promise<void>, updateValidateFunction: () => Promise<void>, reloginEmail: string, reloginPassword: string ){
+  await registerRandomUser(page, email);
+
+  // Edit Dialog
+  await page.getByRole("button", { name: "Edit" }).click();
+  await expect(page.locator("h3")).toContainText("Edit user");
+  await fieldUpdateFunction();
+  await page.getByRole("button", { name: "Update" }).click();
+
+  await page.waitForSelector('[role="dialog"].hidden', { state: "attached" });
+
+  await page.getByRole("link", { name: "Logout" }).click();
+  await page.getByRole("link", { name: "Login" }).click();
+
+  await page.getByRole("textbox", { name: "Email address" }).fill(reloginEmail);
+  await page.getByRole("textbox", { name: "Password" }).fill(reloginPassword);
+  await page.getByRole("button", { name: "Login" }).click();
+
+  await page.getByRole("link", { name: "pd" }).click();
+
+  await updateValidateFunction();
+}
