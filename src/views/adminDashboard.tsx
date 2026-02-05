@@ -18,6 +18,7 @@ export default function AdminDashboard(props: Props) {
   const [userList, setUserList] = React.useState<UserList>({ users: [], more: false });
   const [userPage, setUserPage] = React.useState(0);
   const filterFranchiseRef = React.useRef<HTMLInputElement>(null);
+  const filterUserRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
     (async () => {
@@ -47,11 +48,85 @@ export default function AdminDashboard(props: Props) {
     setFranchiseList(await pizzaService.getFranchises(franchisePage, 10, `*${filterFranchiseRef.current?.value}*`));
   }
 
+  async function filterUsers() {
+    setUserList(await pizzaService.getUserList(userPage, 10, `*${filterUserRef.current?.value}*`));
+  }
+
+  function deleteUser(user: User) {
+    console.log('Delete user clicked for:', user);
+    // TODO: Implement delete functionality
+  }
+
   let response = <NotFound />;
   if (Role.isRole(props.user, Role.Admin)) {
     response = (
       <View title="Mama Ricci's kitchen">
         <div className="text-start py-8 px-4 sm:px-6 lg:px-8">
+          {/* NEW USER TABLE SECTION */}
+          <h3 className="text-neutral-100 text-xl mt-8">Users</h3>
+          <div className="bg-neutral-100 overflow-clip my-4">
+            <div className="flex flex-col">
+              <div className="-m-1.5 overflow-x-auto">
+                <div className="p-1.5 min-w-full inline-block align-middle">
+                  <div className="overflow-hidden">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="uppercase text-neutral-100 bg-slate-400 border-b-2 border-gray-500">
+                        <tr>
+                          {['Name', 'Email', 'Role', ''].map((header) => (
+                            <th key={header} scope="col" className="px-6 py-3 text-center text-xs font-medium">
+                              {header}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {userList.users.map((user, uindex) => (
+                          <tr key={uindex} className="bg-neutral-100">
+                            <td className="text-start px-6 py-2 whitespace-nowrap text-sm font-medium text-gray-800">{user.name}</td>
+                            <td className="text-start px-6 py-2 whitespace-nowrap text-sm text-gray-800">{user.email}</td>
+                            <td className="text-start px-6 py-2 whitespace-nowrap text-sm text-gray-800">
+                              {user.roles?.map((r) => r.role).join(', ')}
+                            </td>
+                            <td className="px-6 py-2 whitespace-nowrap text-end text-sm font-medium">
+                              <button
+                                type="button"
+                                className="px-2 py-1 inline-flex items-center gap-x-2 text-sm font-semibold rounded-lg border border-1 border-orange-400 text-orange-400 hover:border-orange-800 hover:text-orange-800"
+                                onClick={() => deleteUser(user)}
+                              >
+                                <TrashIcon />
+                                Delete
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot>
+                        <tr>
+                          <td colSpan={4} className="text-end text-sm font-medium p-1">
+                            <button
+                              className="w-12 p-1 text-sm font-semibold rounded-lg border border-transparent bg-white text-grey border-grey m-1 hover:bg-orange-200 disabled:bg-neutral-300"
+                              onClick={() => setUserPage(userPage - 1)}
+                              disabled={userPage <= 0}
+                            >
+                              «
+                            </button>
+                            <button
+                              className="w-12 p-1 text-sm font-semibold rounded-lg border border-transparent bg-white text-grey border-grey m-1 hover:bg-orange-200 disabled:bg-neutral-300"
+                              onClick={() => setUserPage(userPage + 1)}
+                              disabled={!userList.more}
+                            >
+                              »
+                            </button>
+                          </td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
           <h3 className="text-neutral-100 text-xl">Franchises</h3>
           <div className="bg-neutral-100 overflow-clip my-4">
             <div className="flex flex-col">

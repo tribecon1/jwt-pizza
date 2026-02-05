@@ -79,6 +79,29 @@ export async function basicInit(page: Page, initRoute: string = "/") {
     await route.fulfill({ json: loggedInUser });
   });
 
+  await page.route(/\/api\/user(\?.*)?$/, async (route) => {
+    const method = route.request().method();
+
+    if (method === "GET") {
+      const isAdmin = loggedInUser?.roles?.some(
+        (r) => r.role === Role.Admin
+      );
+
+      if (!loggedInUser) {
+        return route.fulfill({ status: 401, json: { error: "Not Logged In" } });
+      }
+
+      if (!isAdmin) {
+        return route.fulfill({ status: 403, json: { error: "Unauthorized" } });
+      }
+
+      return route.fulfill({
+        json: { users: Object.values(userDatabase), more: false },
+      });
+    }
+  });
+
+
   await page.route("*/**/api/user/*", async (route) => {
     const req = route.request();
     const method = req.method();

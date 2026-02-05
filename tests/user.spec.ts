@@ -1,5 +1,5 @@
 import { test, expect } from "playwright-test-coverage";
-import { editProfileField, registerRandomUser } from "./test-helper-methods";
+import { basicInit, editProfileField, loginSteps, registerRandomUser } from "./test-helper-methods";
 
 // EDIT USER FEATURE
 test("update user username", async ({ page }) => {
@@ -58,6 +58,13 @@ test("update user password", async ({ page }) => {
 
 
 // ADMIN LIST USERS FEATURE
-test("display for admin user list of users table", async ({ page }) => {
-  
+test("display admin dashboard list of users", async ({ page }) => {
+  await basicInit(page);
+  await page.getByRole("link", { name: "Login" }).click();
+  await loginSteps(page, "a@jwt.com", "b");
+  await page.getByRole("link", { name: "Admin" }).click();
+  await expect(page.getByRole('main')).toContainText('pizza diner');
+  await expect(page.getByRole('main')).toContainText('Admin Tester');
+  await expect(page.getByRole('main')).toContainText('Franchisee User');
+  await expect(page.getByRole('row', { name: 'pizza diner d@jwt.com diner' }).getByRole('button')).toBeVisible();
 });
