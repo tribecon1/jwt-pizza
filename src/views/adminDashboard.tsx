@@ -102,6 +102,12 @@ export default function AdminDashboard(props: Props) {
                       </tbody>
                       <tfoot>
                         <tr>
+                          <td className="px-1 py-1">
+                            <input type="text" ref={filterUserRef} name="filterUser" placeholder="Filter users" className="px-2 py-1 text-sm border border-gray-300 rounded-lg" />
+                            <button type="submit" className="ml-2 px-2 py-1 text-sm font-semibold rounded-lg border border-orange-400 text-orange-400 hover:border-orange-800 hover:text-orange-800" onClick={filterUsers}>
+                              Submit
+                            </button>
+                          </td>
                           <td colSpan={4} className="text-end text-sm font-medium p-1">
                             <button
                               className="w-12 p-1 text-sm font-semibold rounded-lg border border-transparent bg-white text-grey border-grey m-1 hover:bg-orange-200 disabled:bg-neutral-300"

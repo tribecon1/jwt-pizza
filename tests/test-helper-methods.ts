@@ -80,7 +80,8 @@ export async function basicInit(page: Page, initRoute: string = "/") {
   });
 
   await page.route(/\/api\/user(\?.*)?$/, async (route) => {
-    const method = route.request().method();
+    const req = route.request();
+    const method = req.method();
 
     if (method === "GET") {
       const isAdmin = loggedInUser?.roles?.some(
@@ -95,8 +96,21 @@ export async function basicInit(page: Page, initRoute: string = "/") {
         return route.fulfill({ status: 403, json: { error: "Unauthorized" } });
       }
 
+      const url = new URL(req.url());
+      const nameFilter = url.searchParams.get("name") ?? "*";
+
+      let users = Object.values(userDatabase);
+
+      if (nameFilter !== "*") {
+        const cleaned = nameFilter.replace(/\*/g, "").toLowerCase();
+
+        users = users.filter((u) =>
+          u.name?.toLowerCase().includes(cleaned)
+        );
+      }
+
       return route.fulfill({
-        json: { users: Object.values(userDatabase), more: false },
+        json: { users, more: false },
       });
     }
   });

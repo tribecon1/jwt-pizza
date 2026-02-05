@@ -68,3 +68,15 @@ test("display admin dashboard list of users", async ({ page }) => {
   await expect(page.getByRole('main')).toContainText('Franchisee User');
   await expect(page.getByRole('row', { name: 'pizza diner d@jwt.com diner' }).getByRole('button')).toBeVisible();
 });
+
+test("filter admin dashboard list of users", async ({ page }) => {
+  await basicInit(page);
+  await page.getByRole("link", { name: "Login" }).click();
+  await loginSteps(page, "a@jwt.com", "b");
+  await page.getByRole("link", { name: "Admin" }).click();
+  await page.getByRole('textbox', { name: 'Filter users' }).fill('pizza');
+  await page.getByRole('cell', { name: 'pizza Submit' }).getByRole('button').click();
+  await expect(page.getByRole('main')).toContainText('pizza diner');
+  await expect(page.getByRole('main')).not.toContainText('Admin Tester');
+  await expect(page.getByRole('main')).not.toContainText('Franchisee User');
+});
