@@ -1,6 +1,7 @@
 import { test, expect } from "playwright-test-coverage";
 import { editProfileField, registerRandomUser } from "./test-helper-methods";
 
+// EDIT USER FEATURE
 test("update user username", async ({ page }) => {
   const email = `user${Math.floor(Math.random() * 10000)}@jwt.com`;
   await registerRandomUser(page, email);
@@ -53,4 +54,10 @@ test("update user password", async ({ page }) => {
     email,
     newPassword,
   );
+});
+
+
+// ADMIN LIST USERS FEATURE
+test("display for admin user list of users table", async ({ page }) => {
+  
 });
