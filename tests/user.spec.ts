@@ -80,3 +80,15 @@ test("filter admin dashboard list of users", async ({ page }) => {
   await expect(page.getByRole('main')).not.toContainText('Admin Tester');
   await expect(page.getByRole('main')).not.toContainText('Franchisee User');
 });
+
+// ADMIN DELETE USER FEATURE
+test("delete user", async ({ page }) => {
+  await basicInit(page);
+  await page.getByRole("link", { name: "Login" }).click();
+  await loginSteps(page, "a@jwt.com", "b");
+  await page.getByRole("link", { name: "Admin" }).click();
+  await page.getByRole('row', { name: 'pizza diner d@jwt.com diner' }).getByRole('button').click();
+  await expect(page.getByRole('heading', { name: 'Confirm Delete' })).toBeVisible();
+  await page.locator('button').filter({ hasText: /^Delete$/ }).click();
+  await expect(page.getByRole('main')).not.toContainText('pizza diner');
+});

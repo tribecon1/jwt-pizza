@@ -17,6 +17,7 @@ export default function AdminDashboard(props: Props) {
   const [franchisePage, setFranchisePage] = React.useState(0);
   const [userList, setUserList] = React.useState<UserList>({ users: [], more: false });
   const [userPage, setUserPage] = React.useState(0);
+  const [userToDelete, setUserToDelete] = React.useState<User | null>(null);
   const filterFranchiseRef = React.useRef<HTMLInputElement>(null);
   const filterUserRef = React.useRef<HTMLInputElement>(null);
 
@@ -53,8 +54,16 @@ export default function AdminDashboard(props: Props) {
   }
 
   function deleteUser(user: User) {
-    console.log('Delete user clicked for:', user);
-    // TODO: Implement delete functionality
+    setUserToDelete(user);
+  }
+
+  async function confirmDelete() {
+    if (userToDelete) {
+      await pizzaService.deleteUser(userToDelete);
+      const keyword = filterUserRef.current?.value ? `*${filterUserRef.current.value}*` : '*';
+      setUserList(await pizzaService.getUserList(userPage, 10, keyword));
+      setUserToDelete(null);
+    }
   }
 
   let response = <NotFound />;
@@ -212,6 +221,35 @@ export default function AdminDashboard(props: Props) {
         <div>
           <Button className="w-36 text-xs sm:text-sm sm:w-64" title="Add Franchise" onPress={createFranchise} />
         </div>
+        {/* DELETE CONFIRMATION MODAL */}
+        {userToDelete && (
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center z-50">
+            <div className="relative p-5 border w-96 shadow-lg rounded-md bg-white">
+              <div className="mt-3 text-center">
+                <h3 className="text-lg leading-6 font-medium text-gray-900">Confirm Delete</h3>
+                <div className="mt-2 px-7 py-3">
+                  <p className="text-sm text-gray-500">
+                    Are you sure you want to delete <span className="font-bold text-gray-800">{userToDelete.name}</span>?
+                  </p>
+                </div>
+                <div className="items-center px-4 py-3">
+                  <button
+                    onClick={() => setUserToDelete(null)}
+                    className="px-4 py-2 bg-gray-500 text-white text-base font-medium rounded-md w-24 mr-2 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-300"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={confirmDelete}
+                    className="px-4 py-2 bg-red-600 text-white text-base font-medium rounded-md w-24 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </View>
     );
   }

@@ -139,6 +139,38 @@ export async function basicInit(page: Page, initRoute: string = "/") {
       }
       userDatabase[updatedUser.email] = updatedUser;
       await route.fulfill({ json: { user: loggedInUser, token: "def456" } });
+    } else if (method === "DELETE"){
+      const isAdmin = loggedInUser?.roles?.some(
+        (r) => r.role === Role.Admin
+      );
+
+      if (!loggedInUser) {
+        return route.fulfill({ status: 401, json: { error: "Not Logged In" } });
+      }
+
+      if (!isAdmin) {
+        return route.fulfill({ status: 403, json: { error: "Unauthorized" } });
+      }
+
+      const userIdToDelete = req.url().split("/").pop();
+      const emailKey = Object.keys(userDatabase).find(
+        (email) => userDatabase[email].id === userIdToDelete
+      );
+
+      if (!emailKey) {
+        return route.fulfill({
+          status: 404,
+          json: { error: "User not found" },
+        });
+      }
+
+      delete userDatabase[emailKey];
+
+      return route.fulfill({
+        status: 200,
+        json: { message: "User deleted successfully" },
+      });
+
     }
   });
 
