@@ -63,3 +63,31 @@ Assigned Peers: Jordan Parr and Bentley Bigelow
 | Description    | Decoded a diner/non-admin JWT, changed `roles` in the payload to `[{"role":"admin"}]`, re-encoded the header and payload, and reused the original signature so the MAC no longer matches the modified body (a forged token). Sent it as `Authorization: Bearer` on `GET /api/user?page=0&limit=10&name=*` and `DELETE /api/user/4`. The APIs returned `401` with `{"message":"unauthorized"}`showing the server did not trust the elevated `roles` claim, validated in the admin dashboard. The attack failed to turn a non-admin JWT into an admin-capable session. |
 | Images         | ![JWT tampering probe](/public/BigelowSelfAttack4.png) |
 | Corrections    | None needed, tampered tokens are rejected and privileges cannot be escalated by editing the payload alone. |
+
+---
+
+### 5. Diner deletes a franchise
+
+| Item           | Result |
+| -------------- | ------ |
+| Date           | April 11, 2026 |
+| Target         | https://pizza-service.bentleybigelow.click |
+| Classification | Broken Access Control |
+| Severity       | 3 |
+| Description    | Diner/non-admin/non-franchisee was still able to delete any franchise by id (either found in a network response or guessed). Using the diner's auth token and calling `DELETE $BASE/api/franchise/<targetId>`, the service answered `200` with `{"message":"franchise deleted"}`, so the franchise (and related stores/roles per the app’s cascade logic) actually went away, representing a loss of data in the available locations, revenue, etc. |
+| Images         | ![Diner franchise delete](/public/BigelowSelfAttack5.png) |
+| Corrections    | Right before `deleteFranchise` hits the database, enforce the same checks as other sensitive routes: require `Role.Admin` or require that the authenticated user’s id shows up in that franchise’s admins list (franchise owner path). |
+
+---
+
+
+
+## Jordan's Penetration Tests on Bentley's JWT Pizza:
+
+
+
+## Bentley's Penetration Tests on Jordan's JWT Pizza:
+
+
+## Summary of Learnings:
+
