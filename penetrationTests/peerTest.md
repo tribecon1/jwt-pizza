@@ -37,4 +37,16 @@ Assigned Peers: Jordan Parr and Bentley Bigelow
 
 ---
 
-### 3. 
+### 3. Broken access control (admin lists and cross-user delete)
+
+| Item           | Result |
+| -------------- | ------ |
+| Date           | April 11, 2026 |
+| Target         | https://pizza-service.bentleybigelow.click |
+| Classification | Broken Access Control |
+| Severity       | 0 |
+| Description    | Tried to see if a non-admin user could perform admin-related actions. `GET /api/user?page=0&limit=10&name=*` with no `Authorization` header returned `401` with `{"message":"unauthorized"}`. The same listing request with a valid auth token returned `403` and the same JSON body. `DELETE /api/user/4` with that auth token also returned `403` and `{"message":"unauthorized"}`. No admin listing or cross-user delete went through. |
+| Images         | ![Broken access control probe](/public/BigelowSelfAttack3.png) |
+| Corrections    | None needed, non-admins are prevented from performing admin functions! |
+
+---
