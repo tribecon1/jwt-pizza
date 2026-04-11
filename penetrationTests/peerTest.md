@@ -1,5 +1,6 @@
 # CS 329 Deliverable #12: Penetration Testing
 Assigned Peers: Jordan Parr and Bentley Bigelow
+
 04/11/26
 
 ## Jordan's Self-Inflicted Penetration Tests:
@@ -50,3 +51,15 @@ Assigned Peers: Jordan Parr and Bentley Bigelow
 | Corrections    | None needed, non-admins are prevented from performing admin functions! |
 
 ---
+
+### 4. JWT tampering / privilege probe
+
+| Item           | Result |
+| -------------- | ------ |
+| Date           | April 11, 2026 |
+| Target         | https://pizza-service.bentleybigelow.click |
+| Classification | Cryptographic Failures |
+| Severity       | 0 |
+| Description    | Decoded a diner/non-admin JWT, changed `roles` in the payload to `[{"role":"admin"}]`, re-encoded the header and payload, and reused the original signature so the MAC no longer matches the modified body (a forged token). Sent it as `Authorization: Bearer` on `GET /api/user?page=0&limit=10&name=*` and `DELETE /api/user/4`. The APIs returned `401` with `{"message":"unauthorized"}`showing the server did not trust the elevated `roles` claim, validated in the admin dashboard. The attack failed to turn a non-admin JWT into an admin-capable session. |
+| Images         | ![JWT tampering probe](/public/BigelowSelfAttack4.png) |
+| Corrections    | None needed, tampered tokens are rejected and privileges cannot be escalated by editing the payload alone. |
