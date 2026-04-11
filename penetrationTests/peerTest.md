@@ -2,6 +2,10 @@
 Assigned Peers: Jordan Parr and Bentley Bigelow
 04/11/26
 
+## Jordan's Self-Inflicted Penetration Tests:
+
+
+
 
 ## Bentley's Self-Inflicted Penetration Tests:
 
@@ -14,9 +18,23 @@ Assigned Peers: Jordan Parr and Bentley Bigelow
 | Classification | Identification and Authentication Failures |
 | Severity       | 1 |
 | Description    | Repeated wrong-password logins were used to identify auth behavior and account discovery by using a real email and a fake email. With a real user email and wrong password, responses were `403` at steady, consistent intervals. With a non-existent email and wrong password, responses were `404` at the same steady pattern. Different status codes allow an attacker to tell registered emails from fake ones. |
-| Images         | ![Brute force account detection](/public/BigelowSelfAttack1.jpg) |
+| Images         | ![Brute force account detection](/public/BigelowSelfAttack1.png) |
 | Corrections    | Return a single generic outcome of `403` with an “incorrect credentials” message whether the email exists or not so attackers can't differentiate between real and nonexistent accounts. I will also add rate limiting by IP (for this project as an in-memory data structure, but prod-level would be an Upstash Redis instance) so brute-force attempts cannot continue unbounded. |
 
 ---
 
-### 2. next
+### 2. Injection probes on list `name` query parameters
+
+| Item           | Result |
+| -------------- | ------ |
+| Date           | April 11, 2026 |
+| Target         | https://pizza-service.bentleybigelow.click |
+| Classification | Injection |
+| Severity       | 0 |
+| Description    | Crafted SQL-style strings were sent in the `name` parameter on `GET /api/user` with unique characters and boolean fragments to see if the input is concatenated into queries or commands, causing errors, extra rows, etc., both without an auth token and with. Every attempt returned only `{"message":"unauthorized"}` with no database errors or unexpected rows. |
+| Images         | ![Injection probe results](/BigelowSelfAttack2.png) |
+| Corrections    | None needed, inputs are parameterized before use! |
+
+---
+
+### 3. 
