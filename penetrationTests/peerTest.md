@@ -32,7 +32,7 @@ Assigned Peers: Jordan Parr and Bentley Bigelow
 | Classification | Injection |
 | Severity       | 0 |
 | Description    | Crafted SQL-style strings were sent in the `name` parameter on `GET /api/user` with unique characters and boolean fragments to see if the input is concatenated into queries or commands, causing errors, extra rows, etc., both without an auth token and with. Every attempt returned only `{"message":"unauthorized"}` with no database errors or unexpected rows. |
-| Images         | ![Injection probe results](/BigelowSelfAttack2.png) |
+| Images         | ![Injection probe results](/public/BigelowSelfAttack2.png) |
 | Corrections    | None needed, inputs are parameterized before use! |
 
 ---
