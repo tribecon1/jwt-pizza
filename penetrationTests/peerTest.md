@@ -88,6 +88,75 @@ Assigned Peers: Jordan Parr and Bentley Bigelow
 
 ## Bentley's Penetration Tests on Jordan's JWT Pizza:
 
+### 1. Broken access control: horizontal privilege escalation
+
+| Item           | Result |
+| -------------- | ------ |
+| Date           | April 13, 2026 |
+| Target         | https://pizza-service.pizzafrodobaggins.click |
+| Classification | Broken Access Control |
+| Severity       | 1 |
+| Description    | I authenticated as UserB (`userb@jwt.com`) and validated the token against `GET /api/user/me` (`200`, id `11`). I then authenticated as UserA (`usera@jwt.com`) and validated `GET /api/user/me` (`200`, id `10`). With UserA's JWT, I attempted a horizontal privilege escalation by calling `PUT /api/user/11` and submitting UserB profile values to overwrite another user's account (`{\"name\":\"pwned-by-userA\",\"email\":\"userb@jwt.com\",\"password\":\"b\"}`). The server correctly denied the change with `403` and `{\"message\":\"unauthorized\"}`, so cross-user account takeover was not possible in this test. |
+| Images         | ![Attempt at horizontal action](/public/BigelowExtAttack1.png) |
+| Corrections    | Authorization checks are correctly blocking cross-user updates, just remove stack traces from the error |
+
+---
+
+### 2. Diner deletes a franchise
+
+| Item           | Result |
+| -------------- | ------ |
+| Date           | April 13, 2026 |
+| Target         | https://pizza-service.pizzafrodobaggins.click |
+| Classification | Broken Access Control |
+| Severity       | 3 |
+| Description    | Same vulnerability as my self pen test #5: a plain diner was able to delete a franchise by id. I logged in as UserA (`usera@jwt.com`) with `PUT /api/auth`, grabbed the JWT, then called `DELETE $BASE/api/franchise/1` with `Authorization: Bearer $A_TOKEN`. The service returned `200` with `{"message":"franchise deleted"}`, so a non-admin, non-franchisee user could remove a franchise (and related stores/roles per the app’s cascade logic), i.e. vertical privilege abuse and data loss. |
+| Images         | ![Diner franchise delete on Jordan](/public/BigelowExtAttack2.png) |
+| Corrections    | Right before `deleteFranchise` hits the database, enforce the same checks as other sensitive routes to require `Role.Admin` or require that the authenticated user’s id appears in that franchise’s admins list (franchise owner path). |
+
+---
+
+### 3. Injection probe: database / query manipulation (SQL-style payloads)
+
+| Item           | Result |
+| -------------- | ------ |
+| Date           | April 13, 2026 |
+| Target         | https://pizza-service.pizzafrodobaggins.click |
+| Classification | Injection |
+| Severity       | 0 |
+| Description    | I probed login and franchise search with SQL-looking strings to see if input was concatenated into queries or could drop tables. On `PUT /api/auth`, I sent `{\"email\":\"' OR 1=1 --\",\"password\":\"x\"}` and a long stylized unicode email; both returned `404` with `{\"message\":\"unauthorized\"}`. On `GET /api/franchise` with `name` set to `\"; DROP TABLE user; --` (via `--data-urlencode`), the response was `200` with `{\"franchises\":[],\"more\":false}`—no `500`, no SQL error text, and the app still worked afterward, so the `user` table was not dropped. |
+| Images         | ![Injection attempt](/public/BigelowExtAttack3.png) |
+| Corrections    | None needed for the attempted endpoints/DB queries! |
+
+---
+
+### 4. Stored XSS attempt on profile name
+
+| Item           | Result |
+| -------------- | ------ |
+| Date           | April 13, 2026 |
+| Target         | https://pizza-service.pizzafrodobaggins.click |
+| Classification | Injection |
+| Severity       | 0 |
+| Description    | I logged in as UserA (`usera@jwt.com`), then `PUT /api/user/10` with `{\"name\":\"<img src=x onerror=alert(1)>\",\"email\":\"usera@jwt.com\",\"password\":\"a\"}` and my bearer token. The API returned `200` and echoed the name as a literal string in JSON. On the frontend profile page, the name showed as plain text (`<img src=x onerror=alert(1)>`) and no browser alert fired—so the text was not executed as HTML/JS in the browser when viewing the user. |
+| Images         | ![Stored XSS probe on profile](/public/BigelowExtAttack4.png) |
+| Corrections    | None needed, just always ensure that they are cast to explicit strings. |
+
+---
+
+### 5. JWT tampering / privilege probe
+
+| Item           | Result |
+| -------------- | ------ |
+| Date           | April 13, 2026 |
+| Target         | https://pizza-service.pizzafrodobaggins.click |
+| Classification | Cryptographic Failures |
+| Severity       | 0 |
+| Description    | Same test pattern as my self pen test #4: I logged in as UserA (`usera@jwt.com`) and decoded the JWT payload, then changed `roles` from diner to `[{\"role\":\"admin\"}]`, re-encoded header/payload, and reused the original signature to create a forged/tampered token. I sent that token to an admin-only listing route (`GET /api/user?page=0&limit=10&name=*`). The service returned `401` with `{\"message\":\"unauthorized\"}`, so the server did not trust the edited payload and the privilege escalation attempt failed. |
+| Images         | ![JWT tampering probe on Jordan](/public/BigelowExtAttack5.png) |
+| Corrections    | None needed, tampered JWTs are rejected and users are unable to escalate themselves to higher roles/priveleges. |
+
+---
 
 ## Summary of Learnings:
 
